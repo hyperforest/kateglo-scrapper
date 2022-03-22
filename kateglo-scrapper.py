@@ -6,19 +6,35 @@ import json
 
 driver = wd.Chrome(service=Service(ChromeDriverManager().install()))
 
-# TODO: loop automatically from p=1 to p=65
-url = 'https://kateglo.com/?&mod=glossary&op=1&phrase=&dc=teknologiinformasi&lang=&src=&srch=Cari&p=1'
+def scrap(p):
+    url = f'https://kateglo.com/?&mod=glossary&op=1&phrase=&dc=teknologiinformasi&lang=&src=&srch=Cari&p={p}'
+    driver.get(url)
 
-driver.get(url)
+    rows = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[1]')
+    english_terms = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[2]')
+    indonesian_terms = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[3]')
+    keywords = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[4]')
 
-rows = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[1]')
-english_terms = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[2]')
-indonesian_terms = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[3]')
-keywords = driver.find_elements(By.XPATH, value='//table/tbody/tr/td[4]')
+    return {
+        'p': p,
+        'rows': rows,
+        'en': english_terms,
+        'id': indonesian_terms,
+        'keyword': keywords
+    }
 
-#TODO: create array of object from english_terms, indonesians_term, and keywords
-#object structure = {en: english_term, id: indonesian_term, keyword: keyword}
-#array structure = [{en:..., id:..., keyword:...}, {en:..., id:..., keyword:...}, ...]
+def main():
+    ret = {
+        'result': []
+    }
 
-it_terms = [{"en": en, "id": id, "keyword": k} for en, id, k in zip(english_terms, indonesian_terms, keywords)]
-print(it_terms)
+    for p in range(1, 66):
+        ret['result'].append(scrap(p))
+
+    with open('result.json', 'w') as f:
+        f.write(json.dumps(ret, indent=4))
+
+    return ret
+
+if __name__ == '__main__':
+    main()
